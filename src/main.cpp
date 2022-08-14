@@ -1,5 +1,9 @@
 #include "main.h"
 
+/* Use pal log */
+#define LOG_LEVEL_FILE LOG_LEVEL_DEBUG
+#include "pal/log.h"
+
 /**
  * Runs initialization code. This occurs as soon as the program is started.
  *
@@ -8,7 +12,11 @@
  */
 void initialize() 
 {
+	/* Initiailze logger */
+	log_init();
 
+	/* Let them know we are in initialize */
+	LOG_ALWAYS("In Initialize");
 }
 
 /**
@@ -18,7 +26,8 @@ void initialize()
  */
 void disabled() 
 {
-
+	/* Let them know we are in disable */
+	LOG_ALWAYS("In Disable");
 }
 
 /**
@@ -32,7 +41,8 @@ void disabled()
  */
 void competition_initialize() 
 {
-
+	/* Let them know we are in comp initialize */
+	LOG_ALWAYS("In Comp Initialize");
 }
 
 /**
@@ -48,6 +58,8 @@ void competition_initialize()
  */
 void autonomous()
 {
+	/* Let them know we are in auton */
+	LOG_ALWAYS("In Autonomous");
 
 }
 
@@ -66,5 +78,7 @@ void autonomous()
  */
 void opcontrol() 
 {
+	/* Let them know we are in opcontrol */
+	LOG_ALWAYS("In Opcontrol");
 
 }
