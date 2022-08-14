@@ -304,6 +304,22 @@
                 "target": "v5",
                 "user_files": [],
                 "version": "4.8.0"
+            },
+            "pal_log": {
+                "location": "C:\\Users\\Andrew\\AppData\\Roaming\\PROS\\templates\\pal_log@1.0.0",
+                "metadata": {
+                    "origin": "local"
+                },
+                "name": "pal_log",
+                "py/object": "pros.conductor.templates.local_template.LocalTemplate",
+                "supported_kernels": "^3.5.3",
+                "system_files": [
+                    "include\\pal\\log.h",
+                    "firmware\\pal_log.a"
+                ],
+                "target": "v5",
+                "user_files": [],
+                "version": "1.0.0"
             }
         },
         "upload_options": {}
