@@ -1,8 +1,32 @@
 #include "main.h"
+#include "stdio.h"
+#include "pros/apix.h"
 
 /* Use pal log */
 #define LOG_LEVEL_FILE LOG_LEVEL_DEBUG
 #include "pal/log.h"
+
+/* Include all of our files */
+#include "motor.h"
+
+
+/* Global instances of our motors */
+motor_t g_motor[NUM_MOTORS];
+
+/* Function to print the attached device classes per port */
+void print_devices()
+{
+    for(int i = 0; i < 21; i++)
+	{
+		v5_device_e_t type = registry_get_plugged_type(i);
+		LOG_ALWAYS("Port %02d has device class %03d",(i+1),type);
+	}
+
+	/* Determine screen size */
+	int bwidth = lv_obj_get_width(lv_scr_act());
+	int bheight = lv_obj_get_height(lv_scr_act());
+	LOG_ALWAYS("Screen is %dx%d px",bwidth,bheight);
+}
 
 /**
  * Runs initialization code. This occurs as soon as the program is started.
@@ -17,6 +41,12 @@ void initialize()
 
 	/* Let them know we are in initialize */
 	LOG_ALWAYS("In Initialize");
+
+	print_devices();
+	sidebar_init();
+	
+	/* Draw Sidebar */
+	sidebar_draw();
 }
 
 /**
@@ -80,5 +110,12 @@ void opcontrol()
 {
 	/* Let them know we are in opcontrol */
 	LOG_ALWAYS("In Opcontrol");
+
+
+	while(1)
+	{
+		delay(1000);
+		LOG_DEBUG("Spinning");
+	}
 
 }

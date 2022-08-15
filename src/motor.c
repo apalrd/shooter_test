@@ -1,0 +1,1 @@
+/* File to manage operation of a single motor */

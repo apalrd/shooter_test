@@ -32,7 +32,7 @@
  *
  * For instance, you can do `4_mtr = 50` to set motor 4's target velocity to 50
  */
-#define PROS_USE_LITERALS
+//#define PROS_USE_LITERALS
 
 #include "api.h"
 
@@ -77,5 +77,15 @@ void opcontrol(void);
  */
 //#include <iostream>
 #endif
+
+
+/* Global instances of our motors */
+#include "motor.h"
+#define NUM_MOTORS 3
+extern motor_t g_motor[NUM_MOTORS];
+
+/* Sidebar */
+#include "sidebar.h"
+
 
 #endif  // _PROS_MAIN_H_
