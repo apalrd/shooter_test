@@ -322,7 +322,7 @@
                 "version": "1.0.0"
             },
             "v5mdi": {
-                "location": "C:\\Users\\Andrew\\AppData\\Roaming\\PROS\\templates\\v5mdi@0.0.4",
+                "location": "C:\\Users\\Andrew\\AppData\\Roaming\\PROS\\templates\\v5mdi@0.0.7",
                 "metadata": {
                     "origin": "local"
                 },
@@ -334,7 +334,7 @@
                 ],
                 "target": "v5",
                 "user_files": [],
-                "version": "0.0.4"
+                "version": "0.0.7"
             }
         },
         "upload_options": {}

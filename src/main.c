@@ -19,13 +19,13 @@ void print_devices()
     for(int i = 0; i < 21; i++)
 	{
 		v5_device_e_t type = registry_get_plugged_type(i);
-		LOG_ALWAYS("Port %02d has device class %03d",(i+1),type);
+		if(type) LOG_ALWAYS("Port %02d has device class %03d",(i+1),type);
 	}
 
 	/* Determine screen size */
-	int bwidth = lv_obj_get_width(lv_scr_act());
-	int bheight = lv_obj_get_height(lv_scr_act());
-	LOG_ALWAYS("Screen is %dx%d px",bwidth,bheight);
+	//int bwidth = lv_obj_get_width(lv_scr_act());
+	//int bheight = lv_obj_get_height(lv_scr_act());
+	//LOG_ALWAYS("Screen is %dx%d px",bwidth,bheight);
 }
 
 /**
@@ -42,11 +42,16 @@ void initialize()
 	/* Let them know we are in initialize */
 	LOG_ALWAYS("In Initialize");
 
-	print_devices();
+	/* Initialize styles */
+	style_init();
+
+	/* Initiailze device allocations */
+	motor_init();
+
+	/* Initialize sidebar, which will initialize tab pages as well */
 	sidebar_init();
-	
-	/* Draw Sidebar */
-	sidebar_draw();
+
+	print_devices();
 }
 
 /**
@@ -115,7 +120,6 @@ void opcontrol()
 	while(1)
 	{
 		delay(1000);
-		LOG_DEBUG("Spinning");
 	}
 
 }

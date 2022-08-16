@@ -13,7 +13,6 @@ extern "C" {
 
 /* Draw sidebar (no reason to undraw it, it's always visible) */
 void sidebar_init();
-void sidebar_draw();
 
 
 #ifdef __cplusplus

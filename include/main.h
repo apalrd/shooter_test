@@ -79,13 +79,21 @@ void opcontrol(void);
 #endif
 
 
-/* Global instances of our motors */
-#include "motor.h"
-#define NUM_MOTORS 3
-extern motor_t g_motor[NUM_MOTORS];
 
 /* Sidebar */
 #include "sidebar.h"
+
+/* Page styles */
+#include "styles.h"
+
+/* Motors */
+#include "motor.h"
+
+/* Other draw functions */
+void config_draw(lv_obj_t * page);
+void run_draw(lv_obj_t * page);
+void log_draw(lv_obj_t * page);
+void ctrl_draw(lv_obj_t * page);
 
 
 #endif  // _PROS_MAIN_H_
