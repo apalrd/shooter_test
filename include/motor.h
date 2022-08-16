@@ -46,9 +46,12 @@ typedef struct
     {
         lv_obj_t * page;
         lv_obj_t * power;
-        lv_obj_t * speed_inc;
-        lv_obj_t * speed_dec;
-        lv_obj_t * speed_disp;
+        lv_obj_t * inc;
+        lv_obj_t * dec;
+        lv_obj_t * set;
+        lv_obj_t * set_label;
+        lv_obj_t * act;
+        lv_obj_t * act_label;
     } run;
     /* Feedback data */
     struct
@@ -57,6 +60,7 @@ typedef struct
         float curr;
         float volt;
         float power;
+        float temp;
         float accum_power;
     } data;
     
@@ -69,7 +73,9 @@ extern motor_t motors[NUM_MOTORS];
 
 /* Functions to operate on motors */
 void motor_init();
-
+void motor_inc(uint8_t idx, int8_t direction);
+void motor_reset_max(uint8_t idx);
+void motor_run(uint8_t idx);
 
 
 #ifdef __cplusplus

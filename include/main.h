@@ -89,9 +89,11 @@ void opcontrol(void);
 /* Motors */
 #include "motor.h"
 
+/* Run tab */
+#include "run.h"
+
 /* Other draw functions */
 void config_draw(lv_obj_t * page);
-void run_draw(lv_obj_t * page);
 void log_draw(lv_obj_t * page);
 void ctrl_draw(lv_obj_t * page);
 

@@ -11,114 +11,110 @@
 /* Possible values of the callback */
 enum
 {
-    CONFIG_CB_PORT,
-    CONFIG_CB_LEAD,
-    CONFIG_CB_REVERSE,
-    CONFIG_CB_GEAR,
-    CONFIG_CB_MAX
+    RUN_CB_RUN,
+    RUN_CB_INC,
+    RUN_CB_DEC,
+    RUN_CB_SET,
+    RUN_CB_ACT,
+    RUN_CB_MAX
 };
 
+static bool run_has_init = false;
 
-/* Function to update a reverse icon by motor index */
-static void config_update_reverse(uint8_t idx)
+
+/* Function to update run button */
+void run_update_run(uint8_t idx)
 {
-    /* Update graphics */
-    if(motors[idx].reversed)
+    /* Break out if we are called before we init */
+    if(!run_has_init)
     {
-        /* Change icon to backwards */
-        LV_IMG_DECLARE(mdi_restore);
-        lv_img_set_src(motors[idx].config.reverse_icon,&mdi_restore);
-
-        /* Change label */
-        lv_label_set_text(motors[idx].config.reverse_label,"REV");   
+        return;
     }
+
+    /* Break out if motor is unconfigured (pointers will be invalid */
+    if(motors[idx].port < 0)
+    {
+        return;
+    }
+
+    /* If we are follower, get power from master. Else, get our power */
+    bool powered = (motors[idx].leader < 0) ? motors[idx].powered : motors[motors[idx].leader].powered;
+    
+    /* Motor is follower, gray out */
+    if(motors[idx].leader >= 0)
+    {
+        lv_obj_set_style(motors[idx].run.power,&style_dis);
+    }
+    /* Motor is on, set green */
+    else if(powered)
+    {
+        lv_obj_set_style(motors[idx].run.power,&style_grn_act);
+    }
+    /* Motor is off, set red */
     else
     {
-        /* Change icon to forwards */
-        LV_IMG_DECLARE(mdi_reload);
-        lv_img_set_src(motors[idx].config.reverse_icon,&mdi_reload);
-
-        /* Change label */
-        lv_label_set_text(motors[idx].config.reverse_label,"FWD");   
-    }
-}
-
-/* Function to update a gear ratio icon by motor index */
-static void config_update_gearset(uint8_t idx)
-{
-    /* New icon and text */
-    if(E_MOTOR_GEARSET_36 == motors[idx].gearset)
-    {
-        /* Change icon to slow */
-        LV_IMG_DECLARE(mdi_speedometer_slow);
-        lv_img_set_src(motors[idx].config.gearset_icon,&mdi_speedometer_slow);
-
-        /* Change label */
-        lv_label_set_text(motors[idx].config.gearset_label,"36:1");   
-    }
-    else if(E_MOTOR_GEARSET_18 == motors[idx].gearset)
-    {
-        /* Change icon to medium */
-        LV_IMG_DECLARE(mdi_speedometer_medium);
-        lv_img_set_src(motors[idx].config.gearset_icon,&mdi_speedometer_medium);
-
-        /* Change label */
-        lv_label_set_text(motors[idx].config.gearset_label,"18:1");   
-    }
-    else
-    {
-        /* Change icon to fast */
-        LV_IMG_DECLARE(mdi_speedometer);
-        lv_img_set_src(motors[idx].config.gearset_icon,&mdi_speedometer);
-
-        /* Change label */
-        lv_label_set_text(motors[idx].config.gearset_label," 6:1");   
-    }
-
-    /* If we are a follower, gray out the button, else set it blue */
-    if(motors[idx].leader < 0)
-    {
-        /* Leader, set blue */
-        lv_obj_set_style(motors[idx].config.gearset,&style_blu_ina);
-    }
-    else
-    {
-        /* Follower, gray out */
-        lv_obj_set_style(motors[idx].config.gearset,&style_dis);
-
-    }
-}
-
-/* Function to update follower (graphics only! does not check validity) */
-static void config_update_follow(uint8_t idx)
-{
-    /* Motor is a leader, set cog icon */
-    if(motors[idx].leader < 0)
-    {
-        /* Change icon back to cog */
-        LV_IMG_DECLARE(mdi_cog);
-        lv_img_set_src(motors[idx].config.lead_icon,&mdi_cog);
-
-        /* Change label back to LEAD */
-        lv_label_set_text(motors[idx].config.lead_label,"LEAD");
-    }
-    /* Motor is not a leader, figure out who is and set that as the text */
-    else
-    {
-        /* Change icon to two people */
-        LV_IMG_DECLARE(mdi_account_multiple_plus);
-        lv_img_set_src(motors[idx].config.lead_icon,&mdi_account_multiple_plus);
-
-        /* Change label to indicate who the leader is */
-        char temp[8];
-        sprintf(temp,"FL %c",(motors[idx].leader + 'A'));
-        lv_label_set_text(motors[idx].config.lead_label,temp);   
+        lv_obj_set_style(motors[idx].run.power,&style_red_ina); 
     }  
 }
 
+/* Function to update grayed out controls when following */
+void run_update_follow(uint8_t idx)
+{
+    /* Break out if init isn't done */
+    if(!run_has_init)
+    {
+        return;
+    }
 
-/* Config callback */
-static lv_res_t config_cb(lv_obj_t *obj)
+    /* Break out if motor is unconfigured (pointers will be invalid */
+    if(motors[idx].port < 0)
+    {
+        return;
+    }
+
+    /* Update grayed-out status of inc, dec, and set buttons */
+    lv_style_t * style = (motors[idx].leader < 0) ? &style_blu_ina : &style_dis;
+    lv_obj_set_style(motors[idx].run.inc,style);
+    lv_obj_set_style(motors[idx].run.dec,style);
+    lv_obj_set_style(motors[idx].run.set,style);
+    lv_obj_set_style(motors[idx].run.act,style);
+
+    /* Call run update run to update it's grayed out status */
+    run_update_run(idx);
+}
+
+/* Update speeds */
+void run_update_speeds(uint8_t idx)
+{
+    /* Break out if init isn't done */
+    if(!run_has_init)
+    {
+        return;
+    }
+
+    /* Break out if motor is unconfigured (pointers will be invalid */
+    if(motors[idx].port < 0)
+    {
+        return;
+    }   
+
+    /* Get our target from the leader if leading */
+    int target = motors[idx].target;
+    if(motors[idx].leader >= 0) target = motors[motors[idx].leader].target;
+
+    /* Set speed */
+    char temp[8];
+    sprintf(temp,"%3d",target);
+    lv_label_set_text(motors[idx].run.set_label,temp);
+
+    /* Act speed */
+    sprintf(temp,"%3d",(int)motors[idx].data.speed);
+    lv_label_set_text(motors[idx].run.act_label,temp);
+}
+
+
+/* Run callback */
+static lv_res_t run_cb(lv_obj_t *obj)
 {
     uint32_t key = lv_obj_get_free_num(obj);
     uint8_t idx = (key & 0xff);
@@ -127,120 +123,42 @@ static lv_res_t config_cb(lv_obj_t *obj)
     /* First check if motor number is valid and motor is configurable */
     if(idx >= NUM_MOTORS)
     {
-        LOG_ERROR("Got callback for config, key is %x, motor is invalid",key);
+        LOG_ERROR("Got callback for run, key is %x, motor is invalid",key);
         return LV_RES_OK;
     }
     else if(motors[idx].port < 0)
     {
-        LOG_WARN("Got callback for config, key is %x, motor has no port",key);
+        LOG_WARN("Got callback for run, key is %x, motor has no port",key);
+        return LV_RES_OK;
+    }
+
+    /* If we are currently a follower, ignore the button */
+    if(motors[idx].leader >= 0)
+    {
+        LOG_WARN("Attempted to change property %d of motor %c, but it's a follower",cb,('A'+idx));
+        /* Update styles so it's grayed out still */
+        run_update_follow(idx);
         return LV_RES_OK;
     }
 
     /* Selection based on property */
     switch(cb)
     {
-    case CONFIG_CB_PORT:
-        LOG_WARN("Cannot change port number for motor %c, feature not implemented",('A'+idx));
-        break;
-    case CONFIG_CB_LEAD:
-        /* If we are currently a follower, promote ourselves to leader
-         * We kick our followers onto our leader when we follow
-         * So we can't have any followers ourselves at this point
-         */
-        if(motors[idx].leader >= 0)
+    case RUN_CB_RUN:
+        motors[idx].powered = !motors[idx].powered;
+        LOG_DEBUG("Changing motor state for %c to %d",('A'+idx),motors[idx].powered);
+        /* Easiest to just update powered for everyone */
+        for(int i = 0; i < NUM_MOTORS;i++)
         {
-            /* Promote ourself */
-            LOG_DEBUG("Promoting motor %c to leader",('A'+idx));
-            motors[idx].leader = -1;
-            config_update_follow(idx);
-            /* Also update gearset so it un-disables */
-            config_update_gearset(idx);
-        }
-        /* The first motor cannot be assigned a leader */
-        else if(idx == 0)
-        {
-            /* Motor does not have leader assigned, but first motor cannot be a leader */
-            LOG_WARN("Trying to make motor %c a follower, but it cannot be a follower",('A'+idx));
-            config_update_follow(idx);
-        }
-        else
-        {
-            /* Motor does not have a leader assigned, look forward to find its leader */
-            for(int i = idx; i > 0; i--)
-            {
-                LOG_DEBUG("Trying to find leader for %c, checking %c",('A'+idx),('A'+i-1));
-                if(motors[i-1].leader < 0)
-                {
-                    LOG_DEBUG("Found leader, using %c",((i-1)+'A'));
-                    motors[idx].leader = i-1;
-                    break;
-                }
-            }
-
-            /* Update our own graphics */
-            config_update_follow(idx);
-            /* Take gearset from the leader and update that too */
-            motors[idx].gearset = motors[motors[idx].leader].gearset;
-            config_update_gearset(idx); 
-
-            /* Look back to the end of the list to see if anyone is following us
-             * If so, they need to follow our leader now
-             */
-            for(int i = idx + 1; i < NUM_MOTORS;i++)
-            {
-                if(motors[i].leader == idx)
-                {
-                    LOG_DEBUG("Motor %c was following us, now needs to follow %c",(i+'A'),(motors[idx].leader+'A'));
-                    /* Change leader */
-                    motors[i].leader = motors[idx].leader;
-
-                    /* Update graphics */
-                    config_update_follow(i);
-                    /* Also update their gearset */
-                    motors[i].gearset = motors[motors[i].leader].gearset;
-                    config_update_gearset(i); 
-                }
-            }       
+            run_update_run(i);
         }
         break;
-    case CONFIG_CB_REVERSE:
-        /* Flip reversed flag */
-        motors[idx].reversed = !motors[idx].reversed;
-        LOG_DEBUG("Updating reverse on motor %c, value is now %d",(idx+'A'),motors[idx].reversed);
-        /* Update graphics */
-        config_update_reverse(idx);
+    case RUN_CB_INC:
+        motor_inc(idx,1);
         break;
-    case CONFIG_CB_GEAR:
-        /* Check if we are a leader and can update gearset */
-        if(motors[idx].leader < 0)
-        {
-            /* Increment gearset and roll over */
-            motors[idx].gearset++;
-            if(motors[idx].gearset > E_MOTOR_GEARSET_06) motors[idx].gearset = 0;
-            LOG_DEBUG("Updating gearset on motor %c, value is now %d",('A'+idx),motors[idx].gearset);
-
-            /* Check if we have any followers and update them too */
-            for(int i = idx + 1; i < NUM_MOTORS;i++)
-            {
-                if(motors[i].leader == idx)
-                {
-                    LOG_DEBUG("Updating gearset for motor %c since it follows %c",('A'+i),('A'+idx));
-                    motors[i].gearset = motors[idx].gearset;
-                    config_update_gearset(i);
-                }
-            }
-        }
-        else
-        {
-            /* Followers can't update gearset */
-            LOG_WARN("Can't update gearset on motor %c since it's a follower",('A'+idx));
-        }
-        /* Update graphics */
-        config_update_gearset(idx);
-        /* Check if we have any followers */
+    case RUN_CB_DEC:
+        motor_inc(idx,-1);
         break;
-    default:
-        LOG_ERROR("Got callback for config, key is %x (motor %c, property %d), property is invalid",key,('A'+idx),cb);
     }
 }
 
@@ -248,25 +166,25 @@ static lv_res_t config_cb(lv_obj_t *obj)
 /* Size of the buttons */
 #define CONFIG_BTN_HEIGHT 36
 /* Function to set common attributes for buttons */
-static void config_button_setup(lv_obj_t * button)
+static void run_button_setup(lv_obj_t * button)
 {
     /* Common attributes for buttons on the config page*/
-    lv_btn_set_action(button,LV_BTN_ACTION_CLICK,config_cb);
+    lv_btn_set_action(button,LV_BTN_ACTION_CLICK,run_cb);
     lv_btn_set_style(button,LV_BTN_STYLE_INA,&style_blu_ina);
-    lv_btn_set_style(button,LV_BTN_STYLE_PR,&style_blu_ina);
+    lv_btn_set_style(button,LV_BTN_STYLE_PR,&style_blu_act);
     lv_btn_set_style(button,LV_BTN_STYLE_REL,&style_blu_ina);
     lv_btn_set_layout(button,LV_LAYOUT_ROW_M);
     lv_obj_set_size(button,90,CONFIG_BTN_HEIGHT);  
 }
 
 
-/* Function to initialize the config page */
-void config_draw(lv_obj_t * page)
+/* Function to initialize the run page */
+void run_draw(lv_obj_t * page)
 {
     /* Create a title */
     lv_obj_t * label, * newpage, * button, * icon;
     label = lv_label_create(page,NULL);
-    lv_label_set_text(label,"CONFIGURE");
+    lv_label_set_text(label,"RUN");
     lv_obj_align(label,0,LV_ALIGN_IN_TOP_MID,0,0);
 
     /* Create one subpage per motor to hold configuration entities */
@@ -274,12 +192,12 @@ void config_draw(lv_obj_t * page)
     {
         /* Page to encapsulate motor config */
         newpage = lv_page_create(page,NULL);
-        motors[i].config.page = newpage;
+        motors[i].run.page = newpage;
         lv_obj_align(newpage,0,LV_ALIGN_IN_TOP_LEFT,i*103+4,22);
         lv_obj_set_size(newpage,100,210);
         lv_obj_set_hidden(newpage,false);
         lv_obj_set_style(newpage,&style_page);
-        lv_page_set_scrl_layout(newpage,LV_LAYOUT_COL_M);
+        lv_page_set_scrl_layout(newpage,LV_LAYOUT_PRETTY);
 
         /* Label for the motor */
         label = lv_label_create(newpage,NULL);
@@ -296,67 +214,75 @@ void config_draw(lv_obj_t * page)
             continue;
         }
 
-        /* Port number button */
-        LV_IMG_DECLARE(mdi_power_plug);
+        /* Power button */
+        LV_IMG_DECLARE(mdi_power);
         button = lv_btn_create(newpage,NULL);
-        motors[i].config.port = button;
-        lv_obj_set_free_num(button,(i+(CONFIG_CB_PORT<<8)));
-        config_button_setup(button);
-        /* Port number icon */
+        motors[i].run.power = button;
+        lv_obj_set_free_num(button,(i+(RUN_CB_RUN<<8)));
+        run_button_setup(button);
+        /* power icon */
         icon = lv_img_create(button,NULL);
-        lv_img_set_src(icon,&mdi_power_plug);
-        lv_obj_set_style(icon,&style_dis);
-        /* Port number text */
-        char text[8];
-        sprintf(text,"%d",motors[i].port);
+        lv_img_set_src(icon,&mdi_power);
+        /* power text */
         label = lv_label_create(button,NULL);
-        motors[i].config.port_label = label;
-        lv_label_set_text(label,text);
+        lv_label_set_text(label,"RUN");
+        /* Update active style */
+        run_update_run(i);
 
-        /* Leader/Follower button */
+        /* Decrement button */
         button = lv_btn_create(newpage,NULL);
-        motors[i].config.lead = button;
-        lv_obj_set_free_num(button,(i+(CONFIG_CB_LEAD<<8)));
-        config_button_setup(button);
-        /* Leader/Follower icon */
+        motors[i].run.dec = button;
+        lv_obj_set_free_num(button,(i+(RUN_CB_DEC<<8)));
+        run_button_setup(button);
+        lv_obj_set_width(button,42);
+        lv_btn_set_layout(button,LV_LAYOUT_CENTER);
+        /* icon */
+        LV_IMG_DECLARE(mdi_arrow_down_bold);
         icon = lv_img_create(button,NULL);
-        motors[i].config.lead_icon = icon;
+        lv_img_set_src(icon,&mdi_arrow_down_bold);
         lv_obj_set_style(icon,&style_dis);
-        /* Leader/Follower text */
-        label = lv_label_create(button,NULL);
-        motors[i].config.lead_label = label;
-        config_update_follow(i);
 
-        /* Reversed button */
+        /* Increment button */
         button = lv_btn_create(newpage,NULL);
-        motors[i].config.reverse = button;
-        lv_obj_set_free_num(button,(i+(CONFIG_CB_REVERSE<<8)));
-        config_button_setup(button);
-        /* Reversed icon */
+        motors[i].run.inc = button;
+        lv_obj_set_free_num(button,(i+(RUN_CB_INC<<8)));
+        run_button_setup(button);
+        lv_obj_set_width(button,42);
+        lv_btn_set_layout(button,LV_LAYOUT_CENTER);
+        /* icon */
+        LV_IMG_DECLARE(mdi_arrow_up_bold);
         icon = lv_img_create(button,NULL);
-        motors[i].config.reverse_icon = icon;
+        lv_img_set_src(icon,&mdi_arrow_up_bold);
         lv_obj_set_style(icon,&style_dis);
-        /* Reversed text */
-        label = lv_label_create(button,NULL);
-        motors[i].config.reverse_label = label;
-        /* Update graphics */
-        config_update_reverse(i);
 
-        /* Gear Ratio button */
+        /* Speed 'Button' */
         button = lv_btn_create(newpage,NULL);
-        motors[i].config.gearset = button;
-        lv_obj_set_free_num(button,(i+(CONFIG_CB_GEAR<<8)));
-        config_button_setup(button);
-        /* Gear Ratio icon */
+        motors[i].run.set = button;
+        lv_obj_set_free_num(button,(i+(RUN_CB_SET<<8)));
+        run_button_setup(button);
+        /* icon */
+        LV_IMG_DECLARE(mdi_play_circle);
         icon = lv_img_create(button,NULL);
-        motors[i].config.gearset_icon = icon;
+        lv_img_set_src(icon,&mdi_play_circle);
         lv_obj_set_style(icon,&style_dis);
-        /* Gear Ratio text */
+        /* label */
         label = lv_label_create(button,NULL);
-        motors[i].config.gearset_label = label;
-        /* Update icon and text */
-        config_update_gearset(i);
+        motors[i].run.set_label = label;
+
+        /* Act Speed 'Button' */
+        button = lv_btn_create(newpage,NULL);
+        motors[i].run.act = button;
+        lv_obj_set_free_num(button,(i+(RUN_CB_ACT<<8)));
+        run_button_setup(button);
+        /* icon */
+        LV_IMG_DECLARE(mdi_speedometer);
+        icon = lv_img_create(button,NULL);
+        lv_img_set_src(icon,&mdi_speedometer);
+        lv_obj_set_style(icon,&style_dis);
+        /* label */
+        label = lv_label_create(button,NULL);
+        motors[i].run.act_label = label;
     }
-
+    run_has_init = true;
 }
 

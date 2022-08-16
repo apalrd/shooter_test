@@ -119,7 +119,16 @@ void opcontrol()
 
 	while(1)
 	{
-		delay(1000);
+		/* Process each motor */
+		for(int i = 0; i < NUM_MOTORS; i++)
+		{
+			/* Set speeds and data log */
+			motor_run(i);
+
+			/* Update graphics */
+			run_update_speeds(i);
+		}
+		delay(20);
 	}
 
 }

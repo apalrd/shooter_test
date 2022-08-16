@@ -22,6 +22,12 @@ enum
 /* Function to update a reverse icon by motor index */
 static void config_update_reverse(uint8_t idx)
 {
+    /* Break out if motor is unconfigured (pointers will be invalid */
+    if(motors[idx].port < 0)
+    {
+        return;
+    }
+    
     /* Update graphics */
     if(motors[idx].reversed)
     {
@@ -46,6 +52,12 @@ static void config_update_reverse(uint8_t idx)
 /* Function to update a gear ratio icon by motor index */
 static void config_update_gearset(uint8_t idx)
 {
+    /* Break out if motor is unconfigured (pointers will be invalid */
+    if(motors[idx].port < 0)
+    {
+        return;
+    }
+    
     /* New icon and text */
     if(E_MOTOR_GEARSET_36 == motors[idx].gearset)
     {
@@ -92,6 +104,12 @@ static void config_update_gearset(uint8_t idx)
 /* Function to update follower (graphics only! does not check validity) */
 static void config_update_follow(uint8_t idx)
 {
+    /* Break out if motor is unconfigured (pointers will be invalid */
+    if(motors[idx].port < 0)
+    {
+        return;
+    }
+    
     /* Motor is a leader, set cog icon */
     if(motors[idx].leader < 0)
     {
@@ -114,6 +132,9 @@ static void config_update_follow(uint8_t idx)
         sprintf(temp,"FL %c",(motors[idx].leader + 'A'));
         lv_label_set_text(motors[idx].config.lead_label,temp);   
     }  
+
+    /* Update the run tab accordingly */
+    run_update_follow(idx);
 }
 
 
@@ -151,6 +172,8 @@ static lv_res_t config_cb(lv_obj_t *obj)
         {
             /* Promote ourself */
             LOG_DEBUG("Promoting motor %c to leader",('A'+idx));
+            /* Turn ourself off */
+            motors[idx].powered = 0;
             motors[idx].leader = -1;
             config_update_follow(idx);
             /* Also update gearset so it un-disables */
@@ -181,6 +204,7 @@ static lv_res_t config_cb(lv_obj_t *obj)
             config_update_follow(idx);
             /* Take gearset from the leader and update that too */
             motors[idx].gearset = motors[motors[idx].leader].gearset;
+            motors[idx].target = motors[motors[idx].leader].target;
             config_update_gearset(idx); 
 
             /* Look back to the end of the list to see if anyone is following us
@@ -198,6 +222,7 @@ static lv_res_t config_cb(lv_obj_t *obj)
                     config_update_follow(i);
                     /* Also update their gearset */
                     motors[i].gearset = motors[motors[i].leader].gearset;
+                    motors[i].target = motors[motors[i].leader].target;
                     config_update_gearset(i); 
                 }
             }       
@@ -218,6 +243,8 @@ static lv_res_t config_cb(lv_obj_t *obj)
             motors[idx].gearset++;
             if(motors[idx].gearset > E_MOTOR_GEARSET_06) motors[idx].gearset = 0;
             LOG_DEBUG("Updating gearset on motor %c, value is now %d",('A'+idx),motors[idx].gearset);
+            /* Reset target speed to max for this gearset */
+            motor_reset_max(idx);
 
             /* Check if we have any followers and update them too */
             for(int i = idx + 1; i < NUM_MOTORS;i++)
@@ -226,6 +253,7 @@ static lv_res_t config_cb(lv_obj_t *obj)
                 {
                     LOG_DEBUG("Updating gearset for motor %c since it follows %c",('A'+i),('A'+idx));
                     motors[i].gearset = motors[idx].gearset;
+                    motors[i].target = motors[idx].target;
                     config_update_gearset(i);
                 }
             }

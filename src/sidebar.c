@@ -105,17 +105,14 @@ void sidebar_init()
 
     /* Call all of the other functions to draw their pages */
     config_draw(sidebar_pages[SIDEBAR_OBJ_CONFIG]);
+    run_draw(sidebar_pages[SIDEBAR_OBJ_RUN]);
 
     /* Select the config page by default */
     LOG_DEBUG("Flipping to page 0 by default");
     sidebar_cb(sidebar_objs[SIDEBAR_OBJ_CONFIG]);
-    //lv_obj_set_hidden(sidebar_pages[SIDEBAR_OBJ_CONFIG],false);
-    //lv_obj_set_style(sidebar_objs[SIDEBAR_OBJ_CONFIG],&style_grn_act);
 
     /* Create a label on each page */
     lv_obj_t * label;
-    label = lv_label_create(sidebar_pages[1],NULL);
-    lv_label_set_text(label,"RUN");
     label = lv_label_create(sidebar_pages[2],NULL);
     lv_label_set_text(label,"LOG");
     label = lv_label_create(sidebar_pages[3],NULL);

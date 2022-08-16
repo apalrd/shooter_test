@@ -10,6 +10,30 @@
 /* Global instances of our motors */
 motor_t motors[NUM_MOTORS];
 
+/* Table of standard increments per gear ratio */
+static const int inc_amt[] = {5, 5, 10};
+static const int max_spd[] = {100, 200, 600};
+
+/* Function to update a motor to its max speed when gear ratio is changed */
+void motor_reset_max(uint8_t idx)
+{
+    motors[idx].target = max_spd[motors[idx].gearset];
+}
+
+/* Function to inc/dec a motor speed with checks */
+void motor_inc(uint8_t idx, int8_t direction)
+{
+
+    /* Add/sub new speed */
+    motors[idx].target += inc_amt[motors[idx].gearset] * direction;
+
+    /* Check underflow */
+    if(motors[idx].target < 0) motors[idx].target = 0;
+
+    /* Check overflow */
+    if(motors[idx].target > max_spd[motors[idx].gearset]) motors[idx].target = max_spd[motors[idx].gearset];
+}
+
 /* Functions to operate on motors */
 void motor_init()
 {
@@ -32,6 +56,7 @@ void motor_init()
             motors[nextAlloc].leader = -1;
             motors[nextAlloc].reversed = false;
             motors[nextAlloc].powered = false;
+            motors[nextAlloc].target = 600; /* Max for gearset 06 */
             LOG_ALWAYS("Found motor on port %02d, allocating as motor %c",(i+1),(nextAlloc+'A'));
             nextAlloc++;
         }
@@ -53,8 +78,48 @@ void motor_init()
         motors[i].gearset = E_MOTOR_GEARSET_06;
         LOG_ALWAYS("No more motors found for motor %c",(i+'A'));
     }
+}
 
-    /* Set motors for testing */
-    motors[2].port = 17;
-    motors[3].port = 14;
+/* Function for runtime motor control */
+void motor_run(uint8_t idx)
+{   
+    if(motors[idx].port < 0)
+    {
+        /* Break out, invalid motor */
+        return;
+    }
+
+    /* Set brake mode to coast */
+    motor_set_brake_mode(motors[idx].port,E_MOTOR_BRAKE_COAST);
+
+    /* Get powered and target from leader if applicable */
+    bool powered = motors[idx].powered;
+    int target = motors[idx].target;
+    int direction = motors[idx].reversed ? -1 : 1;
+
+    if(motors[idx].leader >= 0)
+    {
+        powered = motors[motors[idx].leader].powered;
+        target = motors[motors[idx].leader].target;
+        direction = motors[motors[idx].leader].reversed ? -1 : 1;
+    }
+
+    /* If not powered, stop and update gearset */
+    if(!powered)
+    {
+        motor_brake(motors[idx].port);
+        motor_set_gearing(motors[idx].port,motors[idx].gearset);
+    }
+    /* Else, set target speed */
+    else
+    {
+        motor_move_velocity(motors[idx].port,target*direction);
+    }
+
+    /* Read data parameters */
+    motors[idx].data.speed = motor_get_actual_velocity(motors[idx].port)*(float)direction;
+    motors[idx].data.curr = (float)motor_get_current_draw(motors[idx].port);
+    motors[idx].data.volt = motor_get_voltage(motors[idx].port);
+    motors[idx].data.temp = motor_get_temperature(motors[idx].port);
+    motors[idx].data.power = motor_get_power(motors[idx].port);
 }
