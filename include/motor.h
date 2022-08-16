@@ -66,6 +66,8 @@ typedef struct
         double power;
         /* deg C */
         double temp;
+        /* Accel (rpm/s) */
+        double accel;
         /* Data collected during a spinup */
         struct
         {
@@ -74,12 +76,6 @@ typedef struct
             double time;
             double speed_max;
         } spinup;        
-        /* Data collected during a spindown (freewheeling) */
-        struct
-        {
-            bool armed;
-            double time;
-        } spindown;  
         /* Data collected during a a single shot */
         struct
         {

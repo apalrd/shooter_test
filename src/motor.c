@@ -120,23 +120,39 @@ void motor_run(uint8_t idx)
     }
 
     /* Read data parameters */
+    double speed_last = mine->data.speed;
     mine->data.speed = motor_get_actual_velocity(mine->port)*(float)direction;
-    mine->data.curr = (float)motor_get_current_draw(mine->port);
-    mine->data.volt = motor_get_voltage(mine->port);
+    mine->data.curr = (double)motor_get_current_draw(mine->port)/1000.0;
+    mine->data.volt = (double)motor_get_voltage(mine->port)/1000.0;
     mine->data.temp = motor_get_temperature(mine->port);
     mine->data.power = motor_get_power(mine->port);
+    mine->data.accel = (mine->data.speed - speed_last) / dt;
 
     /* Spinup detector */
-    if(!mine->data.spinup.armed && !powered)
+    if(!powered)
     {
         /* Arm spinup if we are not powered and below 5 RPM */
-        if(fabs(mine->data.speed) < 5.0)
+        if(fabs(mine->data.speed) <= 5.0)
         {
-            mine->data.spinup.armed = true;
-            /* Reset accum data */
-            mine->data.spinup.speed_max = 0.0;
-            mine->data.spinup.energy = 0.0;
-            mine->data.spinup.time = 0.0;
+            if(!mine->data.spinup.armed)
+            {
+                LOG_DEBUG("MOTOR %c Arming Spinup Detector",mine->idx+'A');
+                mine->data.spinup.armed = true;
+                /* Reset accum data */
+                mine->data.spinup.speed_max = 0.0;
+                mine->data.spinup.energy = 0.0;
+                mine->data.spinup.time = 0.0;
+            }
+            else if(mine->data.spinup.speed_max > 0.0)
+            {
+                /* Spinup detector was armed, and never finished */
+                LOG_DEBUG("MOTOR %c Rearming Spinup Detector, Spinup Never Completed",mine->idx+'A');
+                mine->data.spinup.armed = true;
+                /* Reset accum data */
+                mine->data.spinup.speed_max = 0.0;
+                mine->data.spinup.energy = 0.0;
+                mine->data.spinup.time = 0.0;
+            }
         }
     }
     /* If we are powered and armed, run the spinup detector */
@@ -168,12 +184,90 @@ void motor_run(uint8_t idx)
             LOG_ALWAYS("MOTOR %c: SPINUP Reached 99%% in %f sec (%f J)",(mine->idx+'A'),mine->data.spinup.time,mine->data.spinup.energy);
             /* De-arm spinup detect, must spindown to re-run test */
             mine->data.spinup.armed = false;
+            LOG_DEBUG("MOTOR %c: Disarming spinup detector",mine->idx+'A');
+        }
+        /* Store max speed for spinup detector only if new speed is higher than last speed */
+        if(mine->data.spinup.speed_max < mine->data.speed)
+        {
+            mine->data.spinup.speed_max = mine->data.speed;
+        }
+    }
+
+    /* Shot detector */
+    if(!powered)
+    {
+        /* Disarm for sure */
+        mine->data.shot.armed = false;
+    }
+    else if(!mine->data.shot.armed)
+    {
+        /* Check if we should arm it */
+        if(mine->data.speed >= (double)mine->target*0.95)
+        {
+            LOG_DEBUG("MOTOR %c Arming Shot Detector",mine->idx+'A');
+            mine->data.shot.armed = true;
+            mine->data.shot.energy = 0.0;
+            mine->data.shot.inprog = false;
+            mine->data.shot.min_speed = mine->target;
+            mine->data.shot.time = 0.0;
+        }
+    }
+    /* Check if we are not inprog and if we should be */
+    else if(!mine->data.shot.inprog)
+    {
+        /* If we get an accel < -8000, we become inprog */
+        if(mine->data.accel < -4000.0)
+        {
+            LOG_DEBUG("MOTOR %c Shot Detected",mine->idx+'A');
+            mine->data.shot.inprog = true;
+        }
+    }
+    /* Otherwise we are both armed and inprog */
+    else
+    {
+        /* Accumulate time and energy */
+        mine->data.shot.energy += mine->data.power*dt;
+        mine->data.shot.time += dt;
+
+        /* Check min speed we reached */
+        if(mine->data.speed < mine->data.shot.min_speed)
+        {
+            mine->data.shot.min_speed = mine->data.speed;
         }
 
+        /* If we reach 98% of target, report */
+        if(mine->data.speed >= (double)mine->target*0.95)
+        {
+            LOG_DEBUG("MOTOR %c Shot Returned, took %f sec (%f J), Min speed of %f (%f %%)",
+                      mine->idx+'A',
+                      mine->data.shot.time,
+                      mine->data.shot.energy,
+                      mine->data.shot.min_speed,
+                      mine->data.shot.min_speed / (double)mine->target * 100.0);
+            /* End inprog and arm */
+            mine->data.shot.armed = false;
+            mine->data.shot.inprog = false;
+        }
     }
-    /* Store last speed for spinup detector only if new speed is higher than last speed */
-    if(mine->data.spinup.speed_max < mine->data.speed)
+
+    /* Running energy usage */
+    if(!powered)
     {
-        mine->data.spinup.speed_max = mine->data.speed;
+        mine->data.run.time = 0.0;
+        mine->data.run.energy = 0.0;
+    }
+    else
+    {
+        /* Accum energy and time */
+        mine->data.run.energy += mine->data.power*dt;
+        mine->data.run.time += dt;
+
+        /* At 5sec, print the data */
+        if(mine->data.run.time > 5.0)
+        {
+            LOG_ALWAYS("MOTOR %c Runtime Power %f W avg",(mine->idx+'A'),mine->data.run.energy/mine->data.run.time);
+            mine->data.run.time = 0.0;
+            mine->data.run.energy = 0.0;
+        }
     }
 }
