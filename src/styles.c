@@ -2,7 +2,7 @@
 #include "main.h"
 
 /* Use pal log */
-#define LOG_LEVEL_FILE LOG_LEVEL_DEBUG
+#define LOG_LEVEL_FILE LOG_LEVEL_WARN
 #include "pal/log.h"
 
 /* Green button */

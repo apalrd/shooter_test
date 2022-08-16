@@ -101,7 +101,7 @@ void motor_run(uint8_t idx)
     {
         powered = motors[motors[idx].leader].powered;
         target = motors[motors[idx].leader].target;
-        direction = motors[motors[idx].leader].reversed ? -1 : 1;
+        /* Reversed does not come from the leader */
     }
 
     /* If not powered, stop and update gearset */

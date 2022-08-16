@@ -9,23 +9,10 @@
 /* Include all of our files */
 #include "motor.h"
 
-
-/* Global instances of our motors */
-motor_t g_motor[NUM_MOTORS];
-
-/* Function to print the attached device classes per port */
-void print_devices()
+/* Controller code */
+void controller()
 {
-    for(int i = 0; i < 21; i++)
-	{
-		v5_device_e_t type = registry_get_plugged_type(i);
-		if(type) LOG_ALWAYS("Port %02d has device class %03d",(i+1),type);
-	}
-
-	/* Determine screen size */
-	//int bwidth = lv_obj_get_width(lv_scr_act());
-	//int bheight = lv_obj_get_height(lv_scr_act());
-	//LOG_ALWAYS("Screen is %dx%d px",bwidth,bheight);
+	/* Check if we actually have a controller, and leave if we don't */
 }
 
 /**
@@ -50,8 +37,6 @@ void initialize()
 
 	/* Initialize sidebar, which will initialize tab pages as well */
 	sidebar_init();
-
-	print_devices();
 }
 
 /**

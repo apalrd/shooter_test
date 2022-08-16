@@ -104,11 +104,11 @@ void run_update_speeds(uint8_t idx)
 
     /* Set speed */
     char temp[8];
-    sprintf(temp,"%3d",target);
+    sprintf(temp,"%4d",target);
     lv_label_set_text(motors[idx].run.set_label,temp);
 
-    /* Act speed */
-    sprintf(temp,"%3d",(int)motors[idx].data.speed);
+    /* Act speed always comes from this motor */
+    sprintf(temp,"%4d",(int)motors[idx].data.speed);
     lv_label_set_text(motors[idx].run.act_label,temp);
 }
 
