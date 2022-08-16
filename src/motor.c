@@ -89,37 +89,91 @@ void motor_run(uint8_t idx)
         return;
     }
 
+    /* Get a pointer to our motor to make it easier */
+    motor_t * mine = &motors[idx];
+
     /* Set brake mode to coast */
-    motor_set_brake_mode(motors[idx].port,E_MOTOR_BRAKE_COAST);
+    motor_set_brake_mode(mine->port,E_MOTOR_BRAKE_COAST);
 
     /* Get powered and target from leader if applicable */
-    bool powered = motors[idx].powered;
-    int target = motors[idx].target;
-    int direction = motors[idx].reversed ? -1 : 1;
+    bool powered = mine->powered;
+    int target = mine->target;
+    int direction = mine->reversed ? -1 : 1;
 
-    if(motors[idx].leader >= 0)
+    if(mine->leader >= 0)
     {
-        powered = motors[motors[idx].leader].powered;
-        target = motors[motors[idx].leader].target;
+        powered = motors[mine->leader].powered;
+        target = motors[mine->leader].target;
         /* Reversed does not come from the leader */
     }
 
     /* If not powered, stop and update gearset */
     if(!powered)
     {
-        motor_brake(motors[idx].port);
-        motor_set_gearing(motors[idx].port,motors[idx].gearset);
+        motor_brake(mine->port);
+        motor_set_gearing(mine->port,mine->gearset);
     }
     /* Else, set target speed */
     else
     {
-        motor_move_velocity(motors[idx].port,target*direction);
+        motor_move_velocity(mine->port,target*direction);
     }
 
     /* Read data parameters */
-    motors[idx].data.speed = motor_get_actual_velocity(motors[idx].port)*(float)direction;
-    motors[idx].data.curr = (float)motor_get_current_draw(motors[idx].port);
-    motors[idx].data.volt = motor_get_voltage(motors[idx].port);
-    motors[idx].data.temp = motor_get_temperature(motors[idx].port);
-    motors[idx].data.power = motor_get_power(motors[idx].port);
+    mine->data.speed = motor_get_actual_velocity(mine->port)*(float)direction;
+    mine->data.curr = (float)motor_get_current_draw(mine->port);
+    mine->data.volt = motor_get_voltage(mine->port);
+    mine->data.temp = motor_get_temperature(mine->port);
+    mine->data.power = motor_get_power(mine->port);
+
+    /* Spinup detector */
+    if(!mine->data.spinup.armed && !powered)
+    {
+        /* Arm spinup if we are not powered and below 5 RPM */
+        if(fabs(mine->data.speed) < 5.0)
+        {
+            mine->data.spinup.armed = true;
+            /* Reset accum data */
+            mine->data.spinup.speed_max = 0.0;
+            mine->data.spinup.energy = 0.0;
+            mine->data.spinup.time = 0.0;
+        }
+    }
+    /* If we are powered and armed, run the spinup detector */
+    else if(mine->data.spinup.armed && powered)
+    {
+        /* Accumulate energy and time */
+        mine->data.spinup.energy += dt*mine->data.power;
+        mine->data.spinup.time += dt;
+
+        /* If we reached 66%, 95%, 99%, report */
+
+        
+        if((mine->data.speed >= ((double)mine->target*0.66)) &&             /* We have crossed 66% */
+           (mine->data.spinup.speed_max < ((double)mine->target*0.66)))     /* Last speed was below 66% */
+        {
+            /* Report 66% trip */
+            LOG_ALWAYS("MOTOR %c: SPINUP Reached 66%% in %f sec (%f J)",(mine->idx+'A'),mine->data.spinup.time,mine->data.spinup.energy);
+        }
+        else if((mine->data.speed >= ((double)mine->target*0.95)) &&        /* We have crossed 95% */
+           (mine->data.spinup.speed_max < ((double)mine->target*0.95)))     /* Last speed was below 95% */
+        {
+            /* Report 95% trip */
+            LOG_ALWAYS("MOTOR %c: SPINUP Reached 95%% in %f sec (%f J)",(mine->idx+'A'),mine->data.spinup.time,mine->data.spinup.energy);
+        }
+        else if((mine->data.speed >= ((double)mine->target*0.99)) &&        /* We have crossed 99% */
+           (mine->data.spinup.speed_max < ((double)mine->target*0.99)))     /* Last speed was below 99% */
+        {
+            /* Report 95% trip */
+            LOG_ALWAYS("MOTOR %c: SPINUP Reached 99%% in %f sec (%f J)",(mine->idx+'A'),mine->data.spinup.time,mine->data.spinup.energy);
+            /* De-arm spinup detect, must spindown to re-run test */
+            mine->data.spinup.armed = false;
+        }
+
+    }
+    /* Store last speed for spinup detector only if new speed is higher than last speed */
+    if(mine->data.spinup.speed_max < mine->data.speed)
+    {
+        mine->data.spinup.speed_max = mine->data.speed;
+    }
 }

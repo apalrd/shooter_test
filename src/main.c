@@ -96,10 +96,14 @@ void autonomous()
  * operator control task will be stopped. Re-enabling the robot will restart the
  * task, not resume it from where it left off.
  */
+double dt;
 void opcontrol() 
 {
 	/* Let them know we are in opcontrol */
 	LOG_ALWAYS("In Opcontrol");
+
+	/* Set dt at 20ms initially and assume it is */
+	dt = 0.02;
 
 
 	while(1)
@@ -113,7 +117,7 @@ void opcontrol()
 			/* Update graphics */
 			run_update_speeds(i);
 		}
-		delay(20);
+		delay(dt*1000);
 	}
 
 }

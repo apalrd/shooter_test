@@ -97,5 +97,8 @@ void config_draw(lv_obj_t * page);
 void log_draw(lv_obj_t * page);
 void ctrl_draw(lv_obj_t * page);
 
+/* Time step */
+extern double dt;
+
 
 #endif  // _PROS_MAIN_H_

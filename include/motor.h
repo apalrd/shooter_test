@@ -56,12 +56,47 @@ typedef struct
     /* Feedback data */
     struct
     {
-        float speed;
-        float curr;
-        float volt;
-        float power;
-        float temp;
-        float accum_power;
+        /* RPM */
+        double speed;
+        /* Amps */
+        double curr;
+        /* Volts */
+        double volt;
+        /* Watts */
+        double power;
+        /* deg C */
+        double temp;
+        /* Data collected during a spinup */
+        struct
+        {
+            bool armed;
+            double energy;
+            double time;
+            double speed_max;
+        } spinup;        
+        /* Data collected during a spindown (freewheeling) */
+        struct
+        {
+            bool armed;
+            double time;
+        } spindown;  
+        /* Data collected during a a single shot */
+        struct
+        {
+            bool armed;
+            bool inprog;
+            double energy;
+            double time;
+            double min_speed;
+        } shot;
+
+        /* Data collected during a run */
+        struct
+        {
+            double energy;
+            double time;
+        } run;
+        
     } data;
     
 } motor_t;
