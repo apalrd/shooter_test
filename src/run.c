@@ -110,6 +110,21 @@ void run_update_speeds(uint8_t idx)
     /* Act speed always comes from this motor */
     sprintf(temp,"%4d",(int)motors[idx].data.speed);
     lv_label_set_text(motors[idx].run.act_label,temp);
+
+    /* Act speed green if within 5% of target */
+    double tol = target * 0.05;
+    double min = target - tol;
+    double max = target + tol;
+    if(motors[idx].data.speed >= min && motors[idx].data.speed <= max)
+    {
+        lv_obj_set_style(motors[idx].run.act,&style_grn_act);
+        lv_obj_set_style(motors[idx].run.act_label,&style_grn_act);
+    }
+    else
+    {
+        lv_obj_set_style(motors[idx].run.act,&style_red_ina);
+        lv_obj_set_style(motors[idx].run.act_label,&style_red_ina);
+    }
 }
 
 
@@ -282,6 +297,9 @@ void run_draw(lv_obj_t * page)
         /* label */
         label = lv_label_create(button,NULL);
         motors[i].run.act_label = label;
+
+        /* Update run for this motor */
+        run_update_run(i);
     }
     run_has_init = true;
 }

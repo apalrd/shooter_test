@@ -34,9 +34,6 @@ void initialize()
 
 	/* Initiailze device allocations */
 	motor_init();
-
-	/* Initialize sidebar, which will initialize tab pages as well */
-	sidebar_init();
 }
 
 /**
@@ -101,6 +98,9 @@ void opcontrol()
 {
 	/* Let them know we are in opcontrol */
 	LOG_ALWAYS("In Opcontrol");
+
+	/* Initialize sidebar, which will initialize tab pages as well */
+	sidebar_init();
 
 	/* Set dt at 20ms initially and assume it is */
 	dt = 0.02;

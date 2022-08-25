@@ -92,6 +92,9 @@ void opcontrol(void);
 /* Run tab */
 #include "run.h"
 
+/* Report tab */
+#include "report.h"
+
 /* Other draw functions */
 void config_draw(lv_obj_t * page);
 void log_draw(lv_obj_t * page);

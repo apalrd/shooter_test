@@ -68,6 +68,8 @@ typedef struct
         double temp;
         /* Accel (rpm/s) */
         double accel;
+        /* Filtered accel (rpm/s) */
+        double accel_filt;
         /* Data collected during a spinup */
         struct
         {

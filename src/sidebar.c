@@ -106,6 +106,7 @@ void sidebar_init()
     /* Call all of the other functions to draw their pages */
     config_draw(sidebar_pages[SIDEBAR_OBJ_CONFIG]);
     run_draw(sidebar_pages[SIDEBAR_OBJ_RUN]);
+    report_draw(sidebar_pages[SIDEBAR_OBJ_TEST]);
 
     /* Select the config page by default */
     LOG_DEBUG("Flipping to page 0 by default");
@@ -115,6 +116,5 @@ void sidebar_init()
     lv_obj_t * label;
     label = lv_label_create(sidebar_pages[2],NULL);
     lv_label_set_text(label,"LOG");
-    label = lv_label_create(sidebar_pages[3],NULL);
-    lv_label_set_text(label,"TEST");
+
 }
