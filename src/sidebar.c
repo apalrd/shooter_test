@@ -117,4 +117,8 @@ void sidebar_init()
     label = lv_label_create(sidebar_pages[2],NULL);
     lv_label_set_text(label,"LOG");
 
+    /* Invalidate the screen and redraw it */
+    lv_obj_invalidate(lv_scr_act());
+    lv_refr_now();
+
 }
